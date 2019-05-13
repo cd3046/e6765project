@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SMART HOME MONITOR</title>
+    <script src="{{ url_for('static', filename='echarts.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='jquery-3.4.0.min.js') }}"></script>
+</head>
+
+
+
+<body>
+
+
+    <div id="main1" style="width: 800px;height:500px;margin: 0 auto;"></div>
+    <div id="main2" style="width: 800px;height:500px;margin: 0 auto;"></div>
+    <div id="main3" style="width: 800px;height:500px;margin: 0 auto;"></div>
+    <div id="main4" style="width: 1000px;height:300px;margin: 0 auto;"></div>
+
+    <script type="text/javascript">
+        var myChart1 = echarts.init(document.getElementById('main1'));
+        var myChart2 = echarts.init(document.getElementById('main2'));
+        var myChart3 = echarts.init(document.getElementById('main3'));
+        var myChart4 = echarts.init(document.getElementById('main4'));
+        var categories = [];
+        var items = [];
+
+        // Paint light
+        var option = {
+            title: {
+                text: 'Light Monitor'
+            },
+            grid:{
+                left: '5%',
+                right: '5%',
+                //top: '5%',
+                //bottom: '5%',
+            },
+            tooltip: {},
+            legend: {
+                orient : 'horizontal',
+                x : 'center',
+                y : 'top',
+                backgroundColor : 'rgba(0,0,0,0)',
+                data:['Light']
+            },
+            xAxis: {
+                data: categories
+            },
+            yAxis: {},
+            series: [{
+                name: 'Light',
+                type: 'bar',
+                data: items,
+                itemStyle: {
+                normal: {
+                    color: new echarts.graphic.LinearGradient(
+                        0, 0, 0, 1,
+                        [
+                            {offset: 0, color: '#83bff6'},
+                            {offset: 0.5, color: '#188df0'},
+                            {offset: 1, color: '#188df0'}
+                        ]
+                    )
+                },
+                emphasis: {
+                    color: new echarts.graphic.LinearGradient(
+                        0, 0, 0, 1,
+                        [
+                            {offset: 0, color: '#2378f7'},
+                            {offset: 0.7, color: '#2378f7'},
+                            {offset: 1, color: '#83bff6'}
+                        ]
+                    )
+                }
+                },
+            }]
+        };
+
+
+
+        
+        $.ajax({
+            type: "GET",
+            async: true, 
+            url: "/getdata",
+            dataType: "json", 
+            success: function (result) {
+                if (result) {
+
+                    var data0 = option.xAxis.data;
+                    var data1 = option.series[0].data;
+                    //alert(typeof(result.data));
+                    for(var i=0;i<result["categories"].length;i++){
+                       option.xAxis.data.push(result["categories"][i]);
+                     }
+                    //alert(option.xAxis.data);
+
+                    for(var i=0;i<result["data"].length;i++){
+                       option.series[0].data.push(result["data"][i]);
+                     }
+                    //alert(items);
+
+
+
+                }
+                myChart1.setOption(option);
+            },
+            error: function (errorMsg) {
+                alert("Fail!");
+            }
+        });
+
+
+
+        // Paint humidity and gas
+        var dateList = [];
+        var xdata = [];
+        var valueList = [];
+        var gas = [];
+
+
+
+        humidity = {
+
+            // Make gradient line here
+            visualMap: [{
+                show: false,
+                type: 'continuous',
+                seriesIndex: 0,
+                min: 0,
+                max: 400
+            }, {
+                show: false,
+                type: 'continuous',
+                seriesIndex: 1,
+                dimension: 0,
+                min: 0,
+                max: dateList.length - 1
+            }],
+
+
+            title: [{
+                left: 'center',
+                text: 'Humidity Monitor'
+            }, {
+                top: '55%',
+                left: 'center',
+                text: 'Gas Monitor'
+            }],
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis: [{
+                data: dateList
+            }, {
+                data: xdata,
+                gridIndex: 1
+            }],
+            yAxis: [{
+                splitLine: {show: false}
+            }, {
+                splitLine: {show: false},
+                gridIndex: 1
+            }],
+            grid: [{
+                bottom: '60%'
+            }, {
+                top: '60%'
+            }],
+            series: [{
+                type: 'line',
+                showSymbol: false,
+                name: 'Humidity',
+                data: valueList,
+                color: {
+                    type: 'linear',
+                    x: 0,
+                    y: 0,
+                    x2: 1,
+                    y2: 0,
+                    colorStops: [{
+                        offset: 0, color: '#4C84FF' 
+                    }, {
+                        offset: 1, color: '#F07AAD' 
+                    }],
+                    globalCoord: false 
+                }
+            }, {
+                type: 'line',
+                name: 'Gas',
+                showSymbol: false,
+                data: gas,
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                color: {
+                    type: 'linear',
+                    x: 0,
+                    y: 1,
+                    x2: 1,
+                    y2: 1,
+                    colorStops: [{
+                        offset: 1, color: '#ffff66'
+                    }, {
+                        offset: 1, color: '#ff751a' 
+                    }],
+                    globalCoord: false 
+                }
+            }]
+        };
+
+        
+        $.ajax({
+            type: "GET",
+            async: true, 
+            url: "/gethumi&gas",
+            dataType: "json",
+            success: function (result) {
+                if (result) {
+
+                    var data0 = humidity.xAxis.data;
+                    var data1 = humidity.series[0].data;
+                    //alert(typeof(result.data));
+                    for(var i=0;i<result["humi_categories"].length;i++){
+                       dateList.push(result["humi_categories"][i]);    
+                     }
+                    //alert(dateList);
+
+                    for(var i=0;i<result["humi_data"].length;i++){
+                       valueList.push(result["humi_data"][i]);    
+                     }
+                    //alert(valueList);
+
+                    for(var i=0;i<result["gas_categories"].length;i++){
+                       xdata.push(result["gas_categories"][i]);    
+                     }
+                    //alert(xdata);
+
+                    for(var i=0;i<result["gas_data"].length;i++){
+                       gas.push(result["gas_data"][i]);    
+                     }
+
+                    myChart2.setOption(humidity);
+                }
+
+            },
+            error: function (errorMsg) {
+                alert("Fail!");
+            }
+        });
+
+
+
+
+
+
+        // Paint temperature
+        var legend_temp =[];
+        var data_temp_high = [];
+        var data_temp_low = [];
+
+        var temper = {
+            title : {
+                text: 'Temperature changes realtime'
+            },
+            grid:{
+                left: '5%',
+                right: '5%',
+                top: '10%',
+                //bottom: '10%',
+            },
+            tooltip : {
+                trigger: 'axis'
+            },
+            toolbox: {
+                show : true,
+                feature : {
+                    mark : {show: true},
+                    dataView : {show: true, readOnly: false},
+                    magicType : {show: true, type: ['line', 'bar']},
+                    restore : {show: true},
+                    saveAsImage : {show: true}
+                }
+            },
+            calculable : true,
+            xAxis: [
+                {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: (function (){
+                        var now = new Date();
+                        var res = [];
+                        var len = 10;
+                        while (len--) {
+                            res.unshift(now.toLocaleTimeString().replace(/^\D*/,''));
+                            now = new Date(now - 2000);
+                        }
+                        return res;
+                    })()
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    scale: true,
+                    max: 30,
+                    min: 0,
+                    boundaryGap: [0.2, 0.2],
+                    axisLabel : {
+                        formatter: '{value} °C'
+                    }
+                }
+            ],
+            series : [
+                {
+                    name:'Temperature',
+                    type:'line',
+                    data: data_temp_high,
+                    markPoint : {
+                        data : [
+                            {type : 'max', name: 'Maximum Value'},
+                            {type : 'min', name: 'Minimum Value'}
+                        ]
+                    },
+                    markLine : {
+                        data : [
+                            {type : 'average', name: 'Average'}
+                        ]
+                    },
+                    color: {
+                    type: 'linear',
+                    x: 0,
+                    y: 0,
+                    x2: 1,
+                    y2: 0,
+                    colorStops: [{
+                        offset: 0, color: '#deeaee'
+                    }, {
+                        offset: 1, color: '#c94c4c'
+                    }],
+                    globalCoord: false
+                    }
+                }
+            ]
+        };
+
+
+
+        
+        $.ajax({
+            type: "GET",
+            async: true,
+            url: "/gettemp",
+            dataType: "json",
+            success: function (result) {
+                if (result) {
+                    for(var i=0;i<result["data"].length;i++){
+                       temper.series[0].data.push(result["data"][i]);
+                     }
+
+                    myChart3.setOption(temper);
+
+
+                }
+            },
+            error: function (errorMsg) {
+                alert("Fail!");
+                myChart3.hideLoading();
+            }
+        });
+
+
+
+
+        //myChart.setOption(option2);
+
+        var app = {};
+
+        app.count = 11;
+
+        app.timeTicket = setInterval(function (){
+            $.ajax({
+                type: "GET",
+                async: true,
+                url: "/newdata",
+                dataType: "json",
+                success: function (result) {
+                    if (result) {
+                        var data0 = temper.series[0].data;
+                        //var data1 = temper.series[1].data;
+                        data0.shift();
+                        data0.push(result["new"]);
+                        temper.xAxis[0].data.shift();
+                        temper.xAxis[0].data.push(result["time"]);
+                        myChart3.setOption(temper);
+                    }
+                },
+                error: function (errorMsg) {
+                    alert("Fail!");
+                }
+            });
+        }, 2000);
+
+
+
+
+
+
+        // Paint air quality
+
+        var hours = [];
+        var days = ['Air Quality Monitor'];
+
+        var data = [];
+
+
+
+
+
+
+        air = {
+            tooltip: {
+                position: 'top'
+            },
+            title: [],
+            singleAxis: [],
+            series: [],
+            visualMap: [{
+                type: 'continuous',
+                min: 10,
+                max: 50,
+                range: [10, 50],
+                splitNumber: 3,
+                inRange: {
+                    color: ['#d94e5d','#eac736','#50a3ba'].reverse()
+                },
+                text:['High Polution','Fresh Air'],
+                textStyle: {
+                    color: '#92a8d1'
+                },
+                padding: [
+                    100,  // up
+                    10, // right
+                    10,  // down
+                    10, // left
+                ],
+                itemWidth: 30,
+                itemHeight: 100
+            }]
+        };
+
+        echarts.util.each(days, function (day, idx) {
+            air.title.push({
+                textBaseline: 'middle',
+                top: (idx + 0.5) * 100/3  + '%',
+                left: 0,
+                text: ['Air Quality\n   Monitor']
+            });
+            air.singleAxis.push({
+                left: 150,
+                type: 'category',
+                boundaryGap: false,
+                data: hours,
+                top: (idx * 100*5/6  + 5) + '%',
+                height: (100*5/6  - 10) + '%',
+                axisLabel: {
+                    interval: 2
+                }
+            });
+            air.series.push({
+                name: 'Air Quality',
+                singleAxisIndex: idx,
+                coordinateSystem: 'singleAxis',
+                type: 'scatter',
+                data: [],
+                symbolSize: function (dataItem) {
+                    return dataItem[1];
+                }
+            });
+        });
+
+
+
+
+        $.ajax({
+            type: "GET",
+            async: true,
+            url: "/getair",
+            dataType: "json",
+            success: function (result) {
+                if (result) {
+
+                    for(var i=0;i<result["categories"].length;i++){
+                       air.singleAxis[0].data.push(result["categories"][i]);
+                     }
+
+
+                    //alert(typeof(result.data));
+                    for(var i=0;i<result["categories"].length;i++){
+                        var airq = [];
+                       airq.push(result["categories"][i]);
+                       airq.push(result["data"][i]);
+                       air.series[0].data.push(airq);
+                     }
+                    //alert(air.series[0].data);
+
+                }
+                myChart4.setOption(air);
+
+            },
+            error: function (errorMsg) {
+                alert("Fail!");
+            }
+        });
+
+    </script>
+</body>
+</html>
